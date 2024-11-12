@@ -2,13 +2,9 @@
 from pathlib import Path
 import os
 import argparse
+from utils import load_all_papers
 
 DEFAULT_DOC_PATH = Path('/Users/nanwu/Desktop/readings')
-
-def load_all_papers(doc_path: Path):
-    files = list(doc_path.glob('*.pdf'))
-    files.extend(doc_path.glob('*/*.pdf'))
-    return files
 
 def remove_duplicates_by_name(files: list[Path]):
     return list(set(files))
