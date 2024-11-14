@@ -10,6 +10,7 @@ import pandas as pd
 import argparse
 from tqdm.rich import tqdm
 from datetime import datetime
+import pymupdf
 
 DEFAULT_DOC_PATH = Path('/Users/nanwu/Desktop/readings')
 ROOT_PATH = Path('/Users/nanwu/datasets/paper_manager/')
@@ -28,7 +29,11 @@ def doc_type_classifier(aspect_ratios, words_per_page):
         return "undetermined"
 
 def analyze_pdf(file_path, n_pages_to_analyze=10):
-    doc = fitz.open(file_path)
+    try:
+        doc = fitz.open(file_path)
+    except pymupdf.FileDataError:
+        return None, None
+    
     words_per_page = []
     aspect_ratios = []
 
@@ -70,7 +75,7 @@ def prepare_file_metadata(doc_path: Path, save_path: Path, n_pages_to_analyze: i
         file_dates = [datetime.fromtimestamp(os.path.getmtime(file)).date() for file in tqdm(files, desc="Getting file dates")]
         file_types, font_page_texts = zip(*[analyze_pdf(file, n_pages_to_analyze=n_pages_to_analyze) \
             for file in tqdm(files, desc="Analyzing files")])
-        file_contexts = [get_first_n_tokens_tiktoken(text, 'llama3.2:1b', n_tokens_to_context) \
+        file_contexts = [get_first_n_tokens_tiktoken(text, 'llama3.2:1b', n_tokens_to_context) if text is not None else None\
             for text in tqdm(font_page_texts, desc="Getting file contexts")]
         print(f"Analyzing {len(files)} files")
 
@@ -83,7 +88,7 @@ def prepare_file_metadata(doc_path: Path, save_path: Path, n_pages_to_analyze: i
             'file_context': file_contexts,
             'file_info': [pd.NA] * len(files)
         })
-        file_metadata.to_csv(save_path / 'paper_info.csv', index=True)
+        file_metadata.to_csv(save_path / 'paper_info.csv', index=True, escapechar='\\')
         
     else:
         file_metadata = pd.read_csv(save_path / 'paper_info.csv')
@@ -112,7 +117,7 @@ def main(args):
         futures = []
         for _, row in tqdm(file_metadata.iterrows(), total=len(file_metadata), desc="Processing files"):
             file_idx, file_context = row['file_idx'], row['file_context']
-            if pd.isna(row['file_info']):
+            if pd.isna(row['file_info']) and file_context is not None:
                 futures.append(executor.submit(get_file_info, file_idx, file_context))
             
         for i, future in tqdm(enumerate(concurrent.futures.as_completed(futures)), total=len(futures), desc="Processing results"):
@@ -121,7 +126,7 @@ def main(args):
             if i % save_window == 0:
                 file_metadata.to_csv(save_path / 'paper_info.csv', index=True)
         
-    file_metadata.to_csv(save_path / 'paper_info.csv', index=True)
+    file_metadata.to_csv(save_path / 'paper_info.csv', index=True, escapechar='\\')
     print(f"Saved {len(file_metadata)} files to {save_path / 'paper_info.csv'}")
 
 if __name__ == "__main__":
