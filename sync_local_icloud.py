@@ -6,6 +6,7 @@ from tqdm.rich import tqdm
 ROOT_PATH = Path('/Users/nanwu/datasets/paper_manager/readings')
 
 file_metadata = pd.read_csv(ROOT_PATH / 'paper_info.csv')
+file_metadata = file_metadata.dropna(subset=['doc_type'], inplace=False)
 
 # %%
 
