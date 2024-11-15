@@ -24,7 +24,7 @@ from utils import (
 )
 
 
-ROOT_PATH = Path('/Users/nanwu/datasets/paper_manager/readings')
+ROOT_PATH = Path('/Users/nanwu/datasets/paper_manager/')
 DEFAULT_DOC_PATH = ROOT_PATH / 'recent'
 
 class DocType(Enum):
@@ -93,7 +93,7 @@ def get_file_features(doc: fitz.Document, n_pages_to_analyze=10):
     )
 
 
-def file_type_refinement(files: list[Path], n_pages_to_analyze: int = 5):
+def get_file_types(files: list[Path], n_pages_to_analyze: int = 5):
     """Refine the file types of a list of files."""
     docs = [read_pdf(file) for file in tqdm(files, desc="Opening files")]
     file_features = [get_file_features(doc, n_pages_to_analyze) \
@@ -201,6 +201,7 @@ def main(args):
     n_pages_to_analyze = args.n_pages_to_analyze
     n_tokens_to_context = args.n_tokens_to_context
     model = args.model
+    save_window = args.save_window
 
     # Load or create initial file metadata
     file_metadata = _load_or_create_metadata(
@@ -343,7 +344,7 @@ def _refine_file_types(
         return file_metadata
         
     current_file_types = file_metadata['file_type'].to_list()
-    file_metadata['file_type'] = file_type_refinement(
+    file_metadata['file_type'] = get_file_types(
         file_metadata.local_file_path, n_pages_to_analyze
     )
 
