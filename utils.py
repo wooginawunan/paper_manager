@@ -50,7 +50,7 @@ def read_pdf(file_path: Path):
         import pymupdf
         try:
             return fitz.open(file_path)
-        except pymupdf.FileDataError:
+        except (pymupdf.FileDataError, pymupdf.FileNotFoundError):
             return None
 
     except ImportError:
