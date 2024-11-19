@@ -87,9 +87,9 @@ def delete_duplicates(
         file_to_delete = files[original] if file_dates[original] < file_dates[duplicate] else files[duplicate]
         print(f"Deleting {file_to_delete}")
         file_idx_to_delete.append(original if file_dates[original] < file_dates[duplicate] else duplicate)
-        try:
+        if file_to_delete != "None" and Path(file_to_delete).exists():
             os.remove(file_to_delete)
-        except FileNotFoundError:
+        else:
             print(f"File {file_to_delete} not found")
     return file_idx_to_delete
 
