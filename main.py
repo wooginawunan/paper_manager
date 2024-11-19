@@ -24,7 +24,7 @@ from utils import (
 )
 
 
-ROOT_PATH = Path('/Users/nanwu/datasets/paper_manager/')
+ROOT_PATH = Path('/Users/nanwu/datasets/paper_manager/readings')
 DEFAULT_DOC_PATH = ROOT_PATH / 'recent'
 
 class DocType(Enum):
@@ -194,7 +194,7 @@ def update_file_locations(file_metadata: pd.DataFrame, current_file_types: list[
 
 def main(args):
     """Main function to process and organize academic papers."""
-    save_path = ROOT_PATH / 'readings'
+    save_path = ROOT_PATH
     save_path.mkdir(parents=True, exist_ok=True)
 
     doc_path = args.doc_path
@@ -277,14 +277,15 @@ def _refresh_file_list(
     )
     print(f"Loaded {len(new_file_metadata)} new files from {doc_path}")
     
-    # Concatenate new files to existing metadata
-    file_metadata = pd.concat([file_metadata, new_file_metadata], ignore_index=True)
 
     # Create folder structure
-    create_folder_structure(save_path, file_metadata.file_type.unique())
+    create_folder_structure(save_path, new_file_metadata.file_type.unique())
 
     # Move files to local
-    file_metadata = move_files_to_local(file_metadata)
+    new_file_metadata = move_files_to_local(new_file_metadata)
+    
+    # Concatenate new files to existing metadata
+    file_metadata = pd.concat([file_metadata, new_file_metadata], ignore_index=True)
 
     # Reset file indices
     file_metadata['file_idx'] = range(len(file_metadata))
@@ -296,6 +297,7 @@ def _refresh_file_list(
 
 def _clean_duplicate_files(file_metadata: pd.DataFrame, save_path: Path) -> pd.DataFrame:
     """Remove duplicate files from the dataset."""
+    file_metadata = file_metadata.fillna("None", inplace=False)
     files = file_metadata.local_file_path.to_list()
     file_dates = file_metadata.file_date.to_list()
     duplicate_pairs = find_duplicate_files(file_metadata.file_name.to_list())
